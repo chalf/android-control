@@ -337,7 +337,11 @@ public class BaseActivity extends AppCompatActivity {
 
         enterServerDialog.setContentView( dialogEnterServerBinding.getRoot() );
         enterServerDialog.setOnShowListener(dialog -> {
+            dialogEnterServerBinding.executePendingBindings();
             dialogEnterServerBinding.serverUrl.requestFocus();
+            if (dialogEnterServerBinding.serverUrl.getText() != null) {
+                dialogEnterServerBinding.serverUrl.setSelection(dialogEnterServerBinding.serverUrl.getText().length());
+            }
         });
         dialogEnterServerBinding.serverUrl.setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus) {

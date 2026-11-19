@@ -84,4 +84,4 @@ Nếu máy chủ bị Router cấp IP LAN mới (ví dụ đổi từ `192.168.1
 1. **Trên máy chủ:** Sửa `BASE_DOMAIN` và `LOCAL_IP` trong `hmdm-docker/.env` rồi chạy `docker compose up -d`.
 2. **Trên màn hình Signage:** 
    * Khi mất mạng, app sẽ tự hiện hộp thoại thông báo lỗi kèm nút **Reset**. Bấm **Reset** để nhập IP mới mà không cần cài lại app.
-   * Hoặc nhấn giữ lâu (Long-press) 2-3 giây trên màn hình nền launcher $\rightarrow$ nhập mật khẩu `12345678` $\rightarrow$ chọn **Change Server URL**.
+   * Hoặc nhấn giữ lâu (Long-press) 2-3 giây trên màn hình nền launcher -> nhập mật khẩu `12345678` -> chọn **Change Server URL**.
