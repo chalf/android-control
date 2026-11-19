@@ -128,6 +128,11 @@ adb shell dpm set-device-owner com.hmdm.launcher/.AdminReceiver
 * **Nâng cấp app:** Tại tab **Applications**, bấm vào biểu tượng **Versions** ở dòng app cần nâng cấp -> upload file `.apk` mới hơn -> vào **Configurations** -> tab con **Applications**, bấm nút **`Upgrade`** (hoặc chọn phiên bản mới) rồi bấm **Save** để đồng loạt các máy tự cập nhật.
 * **Gỡ bỏ app từ xa:** Vào **Configurations** -> tab con **Applications** -> đổi cột **Actions** của app đó thành **`Delete`** (*Xóa*) rồi bấm **Save** *(yêu cầu thiết bị đã cấp quyền Device Owner hoặc Root để gỡ âm thầm)*.
 
+### E. Hỗ trợ cài đặt trực tiếp file `.xapk` (Split APKs)
+* **Thao tác:** Upload trực tiếp file `.xapk` vào tab **Applications** -> chọn **`Install`** trong **Configurations** y hệt như file `.apk` bình thường (không cần giải nén thủ công).
+* **Cơ chế:** Trên thiết bị Android, MDM Agent sẽ tự động giải nén tất cả các file `.apk` con (như `base.apk`, `config.arm64_v8a.apk`...) bên trong gói `.xapk` và dùng `PackageInstaller` gộp cài đặt trong 1 phiên duy nhất.
+* **Lưu ý:** Hỗ trợ tốt chuẩn Split APKs (tải từ APKPure, APKCombo...); không tự copy thư mục dữ liệu `Android/obb` nếu gói `.xapk` đó là game nặng.
+
 ---
 
 ## 7. Hướng dẫn sử dụng tab Configurations (Cấu hình thiết bị)
