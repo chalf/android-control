@@ -1,0 +1,16 @@
+=========================================================================
+==  NOTICE file corresponding to the section 4 d of                    ==
+==  the Apache License, Version 2.0                                    ==
+=========================================================================
+
+Android Control (Signage Control)
+Based on Headwind MDM: Open Source Android Mobile Device Management Software
+
+Original Project Website: https://h-mdm.com
+Original Source Code:
+  - Server: https://github.com/h-mdm/hmdm-server
+  - Android Client: https://github.com/h-mdm/hmdm-android
+  - Docker Setup: https://github.com/h-mdm/hmdm-docker
+
+Copyright (c) 2019 Headwind Solutions LLC (http://www.h-sms.com)
+Copyright (c) 2021 Vsevolod A. Mayorov (https://h-mdm.com)

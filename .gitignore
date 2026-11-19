@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Android Studio & Gradle
+.gradle/
+build/
+*/build/
+*/*/build/
+local.properties
+.idea/
+*.iml
+.cxx/
+
+# APK and Bundle outputs
+*.apk
+*.aab
+*.ap_
+
+# Java & Maven
+target/
+*/target/
+*.class
+*.log
+
+# Docker runtime volumes & sensitive data
+hmdm-docker/volumes/
+volumes/
+hmdm-docker/.env
