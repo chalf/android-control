@@ -70,6 +70,27 @@ docker exec hmdm-docker-postgresql-1 psql -U hmdm -d hmdm -c "UPDATE application
 cd ~/repos/signage_control/hmdm-docker && docker compose up -d
 ```
 
+### Cách đổi Server URL trên thiết bị Android khi đổi IP:
+* **Cách 1 (Thao tác trực tiếp trên màn hình Signage — Dùng khi máy đã mất kết nối với IP cũ):**
+  1. Tìm **biểu tượng Chiếc chìa khóa** hơi mờ ở sát mép phải, chính giữa theo chiều dọc màn hình.
+  2. **Nhấn giữ lâu (Long-press)** vào biểu tượng Chiếc chìa khóa đó *(hoặc bấm nhanh liên tiếp **6 lần trong 3 giây**)*.
+  3. Nhập mật khẩu quản trị (mặc định: **`12345678`**) -> bấm **OK**.
+  4. Trong **Admin Panel**, bấm **Change Server URL** -> nhập `http://<IP-mới>` -> bấm **Save**.
+* **Cách A (Chuyển hàng loạt từ Web Dashboard — Chỉ dùng khi thiết bị vẫn đang online với IP cũ):**
+  1. Vào tab **Configurations** -> bấm sửa cấu hình đang gán cho thiết bị -> chọn tab con **`MDM Settings`**.
+  2. Điền địa chỉ mới (ví dụ `http://192.168.1.150`) vào ô **`New server URL`** -> bấm **Save**. Thiết bị sẽ tự động chuyển sang server mới.
+* **Cách B (Mở Admin Panel hoặc Reset app từ xa qua `Push messages` — Chỉ dùng khi thiết bị vẫn đang online):**
+  * Vào **Functions -> Push messages -> New message** -> chọn thiết bị -> chọn 1 trong 2 lệnh:
+    * **`adminPanel`** *(để trống Payload)*: Bật thẳng màn hình **Admin Panel** (có nút **Change Server URL**) lên thiết bị mà không cần nhấn biểu tượng Chìa khóa hay nhập mật khẩu.
+    * **`clearAppData`** với Payload `{"pkg": "com.hmdm.launcher"}`: Tự động xóa dữ liệu app MDM để quay về màn hình hỏi Server URL ban đầu.
+
+> **Important — Lưu ý nguyên tắc mạng:**
+>
+> Cả Cách A và Cách B ở trên chỉ thực hiện được khi Signage vẫn đang online (đèn xanh), kết nối với Server (tức là bạn gửi lệnh trước khi máy Mac đổi sang IP mới).
+>
+> Nếu máy Mac đã đổi sang IP mới rồi và Signage đang bị kẹt ở IP cũ (mất kết nối, đèn đỏ), Dashboard không thể gửi gói tin xuống thiết bị được nữa.
+>
+> Lúc đó trên Signage bắt buộc phải dùng Cách 1 (nhấn giữ icon Chiếc chìa khóa ở mép phải màn hình → Change Server URL). Cách này luôn chạy độc lập trên thiết bị kể cả khi mất mạng và không cần mở Settings của Android.
 ---
 
 ## 4. Các lệnh Build APK & Cấp quyền Device Owner qua ADB
@@ -124,9 +145,12 @@ adb shell dpm set-device-owner com.hmdm.launcher/.AdminReceiver
 3. Tại cột **Actions**, đổi từ **`Do not install`** (*Không cài*) sang **`Install`** (*Cài đặt*).
 4. Bấm **Save** -> Server sẽ gửi lệnh Push để thiết bị tải APK về và cài đặt ngay lập tức.
 
-### D. Cập nhật phiên bản mới (Update Version) & Gỡ cài đặt
+### D. Cập nhật phiên bản mới (Update Version), Gỡ cài đặt & Xóa khỏi kho
 * **Nâng cấp app:** Tại tab **Applications**, bấm vào biểu tượng **Versions** ở dòng app cần nâng cấp -> upload file `.apk` mới hơn -> vào **Configurations** -> tab con **Applications**, bấm nút **`Upgrade`** (hoặc chọn phiên bản mới) rồi bấm **Save** để đồng loạt các máy tự cập nhật.
-* **Gỡ bỏ app từ xa:** Vào **Configurations** -> tab con **Applications** -> đổi cột **Actions** của app đó thành **`Delete`** (*Xóa*) rồi bấm **Save** *(yêu cầu thiết bị đã cấp quyền Device Owner hoặc Root để gỡ âm thầm)*.
+* **Gỡ bỏ app từ xa trên thiết bị:** Vào **Configurations** -> tab con **Applications** -> đổi cột **Actions** của app đó thành **`Delete`** (*Xóa*) rồi bấm **Save** *(yêu cầu thiết bị đã cấp quyền Device Owner hoặc Root để gỡ âm thầm)*.
+* **Xóa app khỏi kho `Applications` (khi nút thùng rác bị làm mờ / disable):**
+  * **Nguyên nhân:** Nút xóa bị khóa vì app đó đang được tham chiếu trong ít nhất một **Configuration** (kể cả khi đang đặt là `Install` hay `Delete`).
+  * **Cách mở khóa để xóa:** Bấm vào biểu tượng **Danh sách (3 gạch ngang)** trên dòng app đó (hoặc vào **Configurations -> tab con `Applications`**) -> đổi Action của app thành **`Do not install`** (*Không cài*) -> bấm **Save** để ngắt liên kết. Sau đó quay lại tab **Applications**, nút thùng rác sẽ sáng lên để xóa.
 
 ### E. Hỗ trợ cài đặt trực tiếp file `.xapk` (Split APKs)
 * **Thao tác:** Upload trực tiếp file `.xapk` vào tab **Applications** -> chọn **`Install`** trong **Configurations** y hệt như file `.apk` bình thường (không cần giải nén thủ công).
@@ -173,6 +197,35 @@ Khi bấm sửa (**Change**) một cấu hình, bạn sẽ thấy 6 tab con sau:
    * Truyền các biến cấu hình dạng Key-Value (`Name` / `Value` / `Type`) xuống cho các ứng dụng hỗ trợ nhận tham số từ MDM.
 6. **`Files`** *(Tệp)*:
    * Gắn các file (video `.mp4`, ảnh, file cấu hình...) đã upload từ tab **Files** để thiết bị tự động tải về và lưu đúng đường dẫn trên bộ nhớ máy.
+
+---
+
+## 8. Hướng dẫn sử dụng tab Files (Kho tệp tin & Đồng bộ xuống thiết bị)
+
+**Đúng, tab `Files` dùng để lưu trữ và truyền các tệp tin (video `.mp4`, hình ảnh, file `.obb`, file cấu hình `.json`/`.txt`...) từ Server xuống bộ nhớ thiết bị Android.**
+
+### A. Các bước truyền File từ Server xuống thiết bị
+1. **Bước 1 — Đưa file lên kho Server:**
+   * Vào tab **Files** -> bấm nút **Add** *(Thêm)*.
+   * Chọn upload file từ máy tính *(hoặc chọn **External** nếu muốn dán link tải trực tiếp từ bên ngoài mà không cần lưu file lên Server)*.
+   * Tại ô **Path on device** *(Đường dẫn trên thiết bị)*: Điền đường dẫn lưu trên bộ nhớ máy Android.
+     * Mặc định hệ thống tính từ gốc bộ nhớ ngoài (`/storage/emulated/0/`). Ví dụ: nhập `/Movies/quangcao.mp4` -> máy sẽ lưu tại `/storage/emulated/0/Movies/quangcao.mp4`.
+     * *(Nâng cao)* Nếu đường dẫn bắt đầu bằng 2 dấu gạch chéo `//` (ví dụ `//data/local/...`), app sẽ ghi từ thư mục gốc `/` *(chỉ dùng khi máy có quyền Root/System)*.
+   * Bấm **Save**.
+2. **Bước 2 — Gắn file vào Configuration để đẩy xuống thiết bị *(Bắt buộc)*:**
+   * Bấm vào biểu tượng **Danh sách (3 gạch ngang)** ngay trên dòng file vừa tạo *(hoặc vào **Configurations -> sửa cấu hình -> tab con `Files`**)* -> chọn cấu hình của thiết bị -> bấm **Save**.
+   * Thiết bị đang online sẽ tự động tải file về đúng thư mục đã chỉ định.
+
+### B. Các cột & tính năng hữu ích trong tab Files
+* **External** *(Bên ngoài)*: Cho phép trỏ thẳng tới một đường dẫn URL bên ngoài thay vì upload file trực tiếp lên Server.
+* **Variable** *(Biến)*: Dành cho các file cấu hình dạng text (`.json`, `.xml`, `.txt`). Khi bật tùy chọn này, app Android sẽ tự động thay thế các từ khóa `DEVICE_NUMBER`, `CUSTOM1`, `CUSTOM2`, `CUSTOM3` bằng thông số thật của từng thiết bị trước khi lưu file.
+* **Cột Actions** *(Hành động)*:
+  * **Mắt xích:** Copy đường dẫn URL tải trực tiếp của file.
+  * **Danh sách:** Gắn nhanh file này vào các **Configurations**.
+  * **Bút chì:** Sửa đường dẫn đích hoặc upload file mới đè lên *(khi cập nhật file mới cùng tên, các thiết bị sẽ tự động tải lại bản mới)*.
+  * **Thùng rác:** Xóa file khỏi kho Server *(nếu nút này bị mờ thì cần gỡ file khỏi `Configurations` trước)*.
+* **Xóa file trên bộ nhớ thiết bị từ xa:** Vào **Configurations -> tab con `Files`**, tick vào ô **Remove** *(Buộc xóa tệp khỏi bộ nhớ thiết bị)* ở dòng file muốn xóa rồi bấm **Save** -> thiết bị sẽ tự xóa file đó khỏi bộ nhớ máy.
+
 
 
 
