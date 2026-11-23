@@ -359,7 +359,7 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
 
         var HARDWARE_COMMANDS = [
             { key: 'cpu', label: 'CPU (Cores & ABI)', cmd: 'echo "Cores: $(grep -c ^processor /proc/cpuinfo)" && getprop ro.product.cpu.abi' },
-            { key: 'screen', label: 'Screen (Resolution & DPI)', cmd: 'wm size && wm density' },
+            { key: 'screen', label: 'Screen (Resolution & DPI)', cmd: 'OUT=$(wm size 2>&1); echo "$OUT" | grep -q "Physical" && (echo "$OUT" && wm density) || (cat /sys/class/graphics/fb0/virtual_size 2>/dev/null; echo "DPI: $(getprop ro.sf.lcd_density)")' },
             { key: 'ram', label: 'RAM (Memory)', cmd: 'cat /proc/meminfo | head -n 3' },
             { key: 'storage', label: 'Storage (/data)', cmd: 'df -h /data' }
         ];

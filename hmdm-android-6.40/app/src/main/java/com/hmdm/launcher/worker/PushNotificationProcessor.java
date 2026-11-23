@@ -27,7 +27,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.WindowManager;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -340,6 +342,25 @@ public class PushNotificationProcessor {
         }
     }
 
+    private static String getScreenMetricsString(Context context) {
+        try {
+            WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            if (wm != null) {
+                DisplayMetrics metrics = new DisplayMetrics();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    wm.getDefaultDisplay().getRealMetrics(metrics);
+                } else {
+                    wm.getDefaultDisplay().getMetrics(metrics);
+                }
+                return "Physical size: " + metrics.widthPixels + "x" + metrics.heightPixels +
+                       "\nPhysical density: " + metrics.densityDpi;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
     private static void runCommand(Context context, JSONObject payload) {
         if (payload == null) {
             RemoteLogger.log(context, Const.LOG_WARN, "Command failed: no command specified");
@@ -350,6 +371,12 @@ public class PushNotificationProcessor {
             String command = payload.getString("command");
             Log.d(Const.LOG_TAG, "Executing a command: " + command);
             String result = SystemUtils.executeShellCommand(command, true);
+            if (command.contains("wm size") && !result.contains("Physical size") && !result.contains("x")) {
+                String fallback = getScreenMetricsString(context);
+                if (!fallback.isEmpty()) {
+                    result = fallback;
+                }
+            }
             String msg = "Executed a command: " + command;
             if (!result.equals("")) {
                 if (result.length() > 200) {
