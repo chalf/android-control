@@ -358,6 +358,7 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
         };
 
         var HARDWARE_COMMANDS = [
+            { key: 'cpu', label: 'CPU (Cores & ABI)', cmd: 'echo "Cores: $(grep -c ^processor /proc/cpuinfo)" && getprop ro.product.cpu.abi' },
             { key: 'screen', label: 'Screen (Resolution & DPI)', cmd: 'wm size && wm density' },
             { key: 'ram', label: 'RAM (Memory)', cmd: 'cat /proc/meminfo | head -n 3' },
             { key: 'storage', label: 'Storage (/data)', cmd: 'df -h /data' }

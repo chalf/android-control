@@ -40,7 +40,7 @@
         <div class="col-sm-12">
             <div class="panel panel-info">
                 <div class="panel-heading">
-                    <strong>Hardware Check (Screen / RAM / Storage)</strong>
+                    <strong>Hardware Check (CPU / Screen / RAM / Storage)</strong>
                     <span ng-if="hardwareCheck.checkedAt" class="pull-right text-muted" style="font-size: 12px;">
                         Updated: {{hardwareCheck.checkedAt | date:'dd.MM.yy HH:mm:ss'}}
                     </span>
@@ -53,7 +53,7 @@
                         {{hardwareCheck.error}}
                     </div>
                     <table ng-if="hardwareCheck.results" class="table table-bordered" style="margin-bottom: 0;">
-                        <tr ng-repeat="item in [hardwareCheck.results.screen, hardwareCheck.results.ram, hardwareCheck.results.storage]">
+                        <tr ng-repeat="item in [hardwareCheck.results.cpu, hardwareCheck.results.screen, hardwareCheck.results.ram, hardwareCheck.results.storage]">
                             <th style="width: 220px;">{{item.label}}</th>
                             <td>
                                 <pre style="margin: 0; white-space: pre-wrap; background: transparent; border: none; padding: 0;">{{item.output}}</pre>
