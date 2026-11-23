@@ -25,7 +25,7 @@ Dự án này tuân thủ các điều khoản của giấy phép **Apache Licen
 
 Để phục vụ tốt nhất cho bài toán Digital Signage trong mạng LAN và tương thích với các công cụ lập trình mới nhất, các thay đổi sau đã được áp dụng:
 
-### A. Ứng dụng Android Client (`hmdm-android-6.40`)
+### A. Ứng dụng Android Client (`hmdm-android`)
 1. **`app/build.gradle`:**
    * Cập nhật `BASE_URL` và `SECONDARY_BASE_URL` trỏ về máy chủ mạng LAN nội bộ (`http://192.168.1.103`).
    * Đồng bộ khóa bảo mật `REQUEST_SIGNATURE` khớp với cấu hình server Docker.
@@ -48,7 +48,7 @@ Dự án này tuân thủ các điều khoản của giấy phép **Apache Licen
 
 ```text
 android-control/
-├── hmdm-android-6.40/       # Mã nguồn ứng dụng Android Client (Java thuần, hỗ trợ ARMv7a/v8a, x86)
+├── hmdm-android/       # Mã nguồn ứng dụng Android Client (Java thuần, hỗ trợ ARMv7a/v8a, x86)
 ├── hmdm-server-5.41.4/       # Mã nguồn Backend Server (Java, Tomcat, Guice, Jersey, MyBatis, PostgreSQL)
 ├── hmdm-docker/              # Cấu hình Docker Compose triển khai Server nhanh chóng trong LAN
 ├── LICENSE                   # Giấy phép Apache License 2.0
@@ -70,7 +70,7 @@ docker compose up -d
 
 ### Bước 2: Biên dịch và cài đặt Client lên thiết bị
 ```bash
-cd hmdm-android-6.40
+cd hmdm-android
 ./gradlew assembleOpensourceDebug
 ```
 * File APK đầu ra tại: `app/build/outputs/apk/opensource/debug/app-opensource-debug.apk`.

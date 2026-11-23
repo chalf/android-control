@@ -96,8 +96,8 @@ cd ~/repos/signage_control/hmdm-docker && docker compose up -d
 ## 4. Các lệnh Build APK & Cấp quyền Device Owner qua ADB
 
 ```bash
-# Build file APK Debug (trong thư mục hmdm-android-6.40)
-cd ~/repos/signage_control/hmdm-android-6.40
+# Build file APK Debug (trong thư mục hmdm-android)
+cd ~/repos/signage_control/hmdm-android
 ./gradlew assembleOpensourceDebug
 # File đầu ra: app/build/outputs/apk/opensource/debug/app-opensource-debug.apk
 
