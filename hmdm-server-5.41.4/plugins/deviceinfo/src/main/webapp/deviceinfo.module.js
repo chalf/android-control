@@ -249,7 +249,7 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
         }
     })
     .controller('PluginDeviceInfoController', function ($scope, $rootScope, $location, $http, $state, $stateParams,
-                                                        $interval,
+                                                        $interval, $timeout, $q,
                                                         pluginDeviceInfoService, localization, splitDynamicInfoRecord,
                                                         DEVICE_PARAMS, WIFI_PARAMS, GPS_PARAMS,
                                                         MOBILE1_PARAMS, MOBILE2_PARAMS) {
@@ -352,7 +352,184 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
 
         $scope.search = function () {
             clearMessages();
+            $scope.hardwareCheck.results = null;
+            $scope.hardwareCheck.error = undefined;
             loadData();
+        };
+
+        var HARDWARE_COMMANDS = [
+            { key: 'screen', label: 'Screen (Resolution & DPI)', cmd: 'wm size && wm density' },
+            { key: 'ram', label: 'RAM (Memory)', cmd: 'cat /proc/meminfo | head -n 3' },
+            { key: 'storage', label: 'Storage (/data)', cmd: 'df -h /data' }
+        ];
+
+        $scope.hardwareCheck = {
+            loading: false,
+            error: undefined,
+            checkedAt: undefined,
+            results: null
+        };
+
+        var parseMemGb = function (rawText) {
+            if (!rawText) return '';
+            var totalMatch = rawText.match(/MemTotal:\s*(\d+)\s*kB/i);
+            var availMatch = rawText.match(/MemAvailable:\s*(\d+)\s*kB/i);
+            var freeMatch = rawText.match(/MemFree:\s*(\d+)\s*kB/i);
+            var parts = [];
+            if (totalMatch) {
+                parts.push('Total: ' + (parseInt(totalMatch[1], 10) / (1024 * 1024)).toFixed(2) + ' GB');
+            }
+            if (availMatch) {
+                parts.push('Available: ' + (parseInt(availMatch[1], 10) / (1024 * 1024)).toFixed(2) + ' GB');
+            } else if (freeMatch) {
+                parts.push('Free: ' + (parseInt(freeMatch[1], 10) / (1024 * 1024)).toFixed(2) + ' GB');
+            }
+            return parts.length > 0 ? ' (' + parts.join(' | ') + ')' : '';
+        };
+
+        var extractCommandOutput = function (logMessage, cmd) {
+            var prefix = 'Executed a command: ' + cmd;
+            var idx = logMessage.indexOf(prefix);
+            if (idx === -1) return null;
+            var rest = logMessage.substring(idx + prefix.length).trim();
+            if (rest.indexOf('Result:') === 0) {
+                return rest.substring('Result:'.length).trim();
+            }
+            return rest || '(empty output)';
+        };
+
+        var fetchHardwareLogs = function (targetDevice, previousIds, attemptsLeft) {
+            $http.post('rest/plugins/devicelog/log/private/search', {
+                pageNum: 1,
+                pageSize: 30,
+                deviceFilter: targetDevice,
+                messageFilter: 'Executed a command:',
+                applicationFilter: null,
+                severity: -1,
+                dateFrom: null,
+                dateTo: null,
+                sortValue: 'createTime'
+            }).then(function (resp) {
+                if (resp.data && resp.data.status === 'OK' && resp.data.data && resp.data.data.items) {
+                    var items = resp.data.data.items;
+                    var results = {};
+                    var allFresh = true;
+
+                    HARDWARE_COMMANDS.forEach(function (spec) {
+                        var found = null;
+                        for (var i = 0; i < items.length; i++) {
+                            if (items[i].message && items[i].message.indexOf('Executed a command: ' + spec.cmd) !== -1) {
+                                found = items[i];
+                                break;
+                            }
+                        }
+                        if (found) {
+                            var output = extractCommandOutput(found.message, spec.cmd);
+                            var isFresh = !previousIds[spec.key] || found.id !== previousIds[spec.key];
+                            if (!isFresh) {
+                                allFresh = false;
+                            }
+                            results[spec.key] = {
+                                label: spec.label,
+                                output: output + (spec.key === 'ram' ? parseMemGb(output) : ''),
+                                time: found.createTime,
+                                isFresh: isFresh
+                            };
+                        } else {
+                            allFresh = false;
+                            results[spec.key] = {
+                                label: spec.label,
+                                output: 'Waiting for response...',
+                                time: null,
+                                isFresh: false
+                            };
+                        }
+                    });
+
+                    $scope.hardwareCheck.results = results;
+                    $scope.hardwareCheck.checkedAt = new Date();
+
+                    if (allFresh || attemptsLeft <= 0) {
+                        $scope.hardwareCheck.loading = false;
+                        if (!allFresh) {
+                            $scope.hardwareCheck.error = 'Some commands have not returned new logs yet (device may be offline or slow). Showing latest available logs.';
+                        }
+                    } else {
+                        $timeout(function () {
+                            fetchHardwareLogs(targetDevice, previousIds, attemptsLeft - 1);
+                        }, 1500);
+                    }
+                } else {
+                    $scope.hardwareCheck.loading = false;
+                    $scope.hardwareCheck.error = 'Failed to query device logs.';
+                }
+            }, function () {
+                $scope.hardwareCheck.loading = false;
+                $scope.hardwareCheck.error = 'Failed to query device logs.';
+            });
+        };
+
+        $scope.checkHardwareInfo = function () {
+            if (!$scope.deviceInfo || !$scope.deviceInfo.deviceNumber || $scope.hardwareCheck.loading) {
+                return;
+            }
+            var targetDevice = $scope.deviceInfo.deviceNumber;
+            $scope.hardwareCheck.loading = true;
+            $scope.hardwareCheck.error = undefined;
+
+            $http.post('rest/plugins/devicelog/log/private/search', {
+                pageNum: 1,
+                pageSize: 30,
+                deviceFilter: targetDevice,
+                messageFilter: 'Executed a command:',
+                applicationFilter: null,
+                severity: -1,
+                dateFrom: null,
+                dateTo: null,
+                sortValue: 'createTime'
+            }).then(function (logResp) {
+                var previousIds = {};
+                if (logResp.data && logResp.data.status === 'OK' && logResp.data.data && logResp.data.data.items) {
+                    var items = logResp.data.data.items;
+                    HARDWARE_COMMANDS.forEach(function (spec) {
+                        for (var i = 0; i < items.length; i++) {
+                            if (items[i].message && items[i].message.indexOf('Executed a command: ' + spec.cmd) !== -1) {
+                                previousIds[spec.key] = items[i].id;
+                                break;
+                            }
+                        }
+                    });
+                }
+
+                var pushPromises = HARDWARE_COMMANDS.map(function (spec) {
+                    return $http.post('rest/plugins/push/private/send', {
+                        scope: 'device',
+                        deviceNumber: targetDevice,
+                        groupId: '',
+                        configurationId: '',
+                        messageType: 'runCommand',
+                        customMessageType: '',
+                        payload: JSON.stringify({ command: spec.cmd })
+                    });
+                });
+
+                return $q.all(pushPromises).then(function (responses) {
+                    var failed = responses.some(function (r) {
+                        return !r.data || r.data.status !== 'OK';
+                    });
+                    if (failed) {
+                        $scope.hardwareCheck.loading = false;
+                        $scope.hardwareCheck.error = 'Failed to send one or more push commands.';
+                        return;
+                    }
+                    $timeout(function () {
+                        fetchHardwareLogs(targetDevice, previousIds, 8);
+                    }, 2000);
+                });
+            }, function () {
+                $scope.hardwareCheck.loading = false;
+                $scope.hardwareCheck.error = 'Request failed while checking hardware info.';
+            });
         };
 
         $scope.viewDynamicData = function () {

@@ -27,8 +27,43 @@
             <button type='button' class='btn btn-default' ng-click='search()' localized>button.search</button>
             <button type='button' class='btn btn-default' ng-if="deviceInfo"
                     ng-click='viewDynamicData()' localized>button.plugin.deviceinfo.dynamic</button>
+            <button type='button' class='btn btn-primary' ng-if="deviceInfo"
+                    ng-disabled="hardwareCheck.loading"
+                    ng-click='checkHardwareInfo()'>
+                <span class='glyphicon glyphicon-cog'></span>
+                {{hardwareCheck.loading ? 'Checking...' : 'Check Hardware'}}
+            </button>
         </div>
     </form>
+
+    <div ng-if="deviceInfo && (hardwareCheck.loading || hardwareCheck.results || hardwareCheck.error)" class="row" style="margin-top: 20px;">
+        <div class="col-sm-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <strong>Hardware Check (Screen / RAM / Storage)</strong>
+                    <span ng-if="hardwareCheck.checkedAt" class="pull-right text-muted" style="font-size: 12px;">
+                        Updated: {{hardwareCheck.checkedAt | date:'dd.MM.yy HH:mm:ss'}}
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div ng-if="hardwareCheck.loading" class="text-info" style="margin-bottom: 8px;">
+                        Sending commands and waiting for device logs...
+                    </div>
+                    <div ng-if="hardwareCheck.error" class="text-warning" style="margin-bottom: 8px;">
+                        {{hardwareCheck.error}}
+                    </div>
+                    <table ng-if="hardwareCheck.results" class="table table-bordered" style="margin-bottom: 0;">
+                        <tr ng-repeat="item in [hardwareCheck.results.screen, hardwareCheck.results.ram, hardwareCheck.results.storage]">
+                            <th style="width: 220px;">{{item.label}}</th>
+                            <td>
+                                <pre style="margin: 0; white-space: pre-wrap; background: transparent; border: none; padding: 0;">{{item.output}}</pre>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div ng-if="deviceInfo" class="row margin-top-40">
         <div ng-class="{'col-sm-5': latestDynamicData, 'col-sm-12': !latestDynamicData}">
